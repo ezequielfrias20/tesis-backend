@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// model User {
+//   id        Int       @id @default(autoincrement())
+//   name      String
+//   email     String    @unique
+//   password  String
+//   createdAt DateTime  @default(now())
+//   updatedAt DateTime  @updatedAt
+//   callsHost CallRoom[] @relation("Host")
+//   participants Participante[]
+// }
+
+model Room {
+  id        String       @id @default(uuid())
+  // hostId    Int
+  // host      User      @relation("Host", fields: [hostId], references: [id])
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  endedAt   DateTime?
+  participants Participant[]
+  metrics     Metrics[]
+}
+
+model Participant {
+  id          Int       @id @default(autoincrement())
+  // userId      Int
+  // user        User   @relation(fields: [userId], references: [id])
+  peerId      String
+  roomId      String
+  callRoom    Room  @relation(fields: [roomId], references: [id])
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+}
+model Metrics {
+  id                  String   @id @default(cuid())
+  timestamp           DateTime @default(now())
+  roomId              String
+  callRoom            Room     @relation(fields: [roomId], references: [id]) // Relación con CallRoom 
+  jitterVideo         Float    // Variación en el tiempo de llegada de los paquetes
+  packetsLostVideo    Float    // Porcentaje de paquetes perdidos
+  bytesReceivedVideo  Float    // Round-trip time
+  bytesSentVideo      Float    // Tasa de bits (kbps)
+  roundTripTimeVideo  Float    // Nivel de audio, opcional
+  jitterAudio         Float    // Variación en el tiempo de llegada de los paquetes
+  packetsLostAudio    Float    // Porcentaje de paquetes perdidos
+  bytesReceivedAudio  Float    // Round-trip time
+  bytesSentAudio      Float    // Tasa de bits (kbps)
+  roundTripTimeAudio  Float   // Nivel de audio, opcional
+  networkType         String?
+}
+
+// model QoSMetrics {
+//   id        Int      @id @default(autoincrement())
+//   timestamp DateTime
+//   roomId              String
+//   callRoom            Room     @relation(fields: [roomId], references: [id]) // Relación con CallRoom 
+//   rtt       Float?
+//   outgoingBitrate Float?
+//   incomingBitrate Float?
+//   retransmissionRate Float?
+//   packetsLost Int?
+//   transportType String?
+//   localCandidateType String?
+//   remoteCandidateType String?
+//   videoSentBitrate Float?
+//   videoSentFrameRate Float?
+//   videoSentResolution String?
+//   videoSentPacketsLost Int?
+//   videoSentFramesEncoded Int?
+//   videoSentRetransmittedPackets Int?
+//   videoSentCodec String?
+//   videoReceivedBitrate Float?
+//   videoReceivedFrameRate Float?
+//   videoReceivedResolution String?
+//   videoReceivedJitter Float?
+//   videoReceivedPacketsLost Int?
+//   audioSentBitrate Float?
+//   audioSentPacketsLost Int?
+//   audioSentCodec String?
+//   audioSentRetransmittedPackets Int?
+//   audioReceivedBitrate Float?
+//   audioReceivedJitter Float?
+//   audioReceivedPacketsLost Int?
+// }
