@@ -100,6 +100,7 @@ interface IRoomParams {
 export const roomHandler = (socket: Socket) => {
     const createRoom = async () => {
         const roomId = uuidV4();
+        console.log('Creating room with ID:', roomId);
         try {
             await prisma.room.create({
                 data: {
@@ -149,31 +150,31 @@ export const roomHandler = (socket: Socket) => {
         }
     };
 
-    const leaveRoom = async ({ roomId, peerId }: IRoomParams) => {
-        try {
-            const room = await prisma.room.findUnique({
-                where: { roomId }
-            });
+    // const leaveRoom = async ({ roomId, peerId }: IRoomParams) => {
+    //     try {
+    //         const room = await prisma.room.findUnique({
+    //             where: { roomId }
+    //         });
 
-            if (room) {
-                const updatedPeers = room.peers.filter((id: string) => id !== peerId);
-                await prisma.room.update({
-                    where: { roomId },
-                    data: { peers: updatedPeers }
-                });
+    //         if (room) {
+    //             const updatedPeers = room.peers.filter((id: string) => id !== peerId);
+    //             await prisma.room.update({
+    //                 where: { roomId },
+    //                 data: { peers: updatedPeers }
+    //             });
 
-                socket.to(roomId).emit('user-disconnected', peerId);
-                console.log('User left room:', peerId);
-            }
-        } catch (error) {
-            console.error('Error leaving room:', error);
-        }
-    };
+    //             socket.to(roomId).emit('user-disconnected', peerId);
+    //             console.log('User left room:', peerId);
+    //         }
+    //     } catch (error) {
+    //         console.error('Error leaving room:', error);
+    //     }
+    // };
 
     socket.on('create-room', createRoom);
     socket.on('join-room', joinRoom);
-    socket.on('leave-room', leaveRoom);
-    socket.on('disconnect', () => {
-        // Opcional: Manejar desconexiones abruptas si tienes el peerId
-    });
+    // socket.on('leave-room', leaveRoom);
+    // socket.on('disconnect', () => {
+    //     // Opcional: Manejar desconexiones abruptas si tienes el peerId
+    // });
 };
