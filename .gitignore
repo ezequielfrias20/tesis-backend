@@ -8,6 +8,11 @@ node_modules/
 .pnp.js
 
 # Variables de entorno
+.env
+.env.local
+.env.development
+.env.test
+.env.production
 
 # Logs
 *.log
