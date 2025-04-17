@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -26,31 +26,27 @@ datasource db {
 // }
 
 model Room {
-  id        String       @id @default(uuid())
-  // hostId    Int
-  // host      User      @relation("Host", fields: [hostId], references: [id])
-  isActive  Boolean      @default(true)
-  createdAt DateTime     @default(now())
-  endedAt   DateTime?
-  participants Participant[]
-  metrics     Metrics[]
+  id        String   @id @default(uuid()) @map("_id") @db.ObjectId
+  roomId    String   @unique
+  peers     String[] 
+  createdAt DateTime @default(now())
 }
 
-model Participant {
-  id          Int       @id @default(autoincrement())
-  // userId      Int
-  // user        User   @relation(fields: [userId], references: [id])
-  peerId      String
-  roomId      String
-  callRoom    Room  @relation(fields: [roomId], references: [id])
-  joinedAt    DateTime  @default(now())
-  leftAt      DateTime?
-}
+// model Participant {
+//   id          Int       @id @default(autoincrement())
+//   // userId      Int
+//   // user        User   @relation(fields: [userId], references: [id])
+//   peerId      String
+//   roomId      String
+//   callRoom    Room  @relation(fields: [roomId], references: [id])
+//   joinedAt    DateTime  @default(now())
+//   leftAt      DateTime?
+// }
 model Metrics {
-  id                  String   @id @default(cuid())
+  id                  String   @id @default(cuid()) @map("_id") @db.ObjectId
   timestamp           DateTime @default(now())
-  roomId              String
-  callRoom            Room     @relation(fields: [roomId], references: [id]) // Relación con CallRoom 
+  // roomId              String 
+  // callRoom            Room     @relation(fields: [roomId], references: [id]) // Relación con CallRoom 
   jitterVideo         Float    // Variación en el tiempo de llegada de los paquetes
   packetsLostVideo    Float    // Porcentaje de paquetes perdidos
   bytesReceivedVideo  Float    // Round-trip time
@@ -63,37 +59,3 @@ model Metrics {
   roundTripTimeAudio  Float   // Nivel de audio, opcional
   networkType         String?
 }
-
-// model QoSMetrics {
-//   id        Int      @id @default(autoincrement())
-//   timestamp DateTime
-//   roomId              String
-//   callRoom            Room     @relation(fields: [roomId], references: [id]) // Relación con CallRoom 
-//   rtt       Float?
-//   outgoingBitrate Float?
-//   incomingBitrate Float?
-//   retransmissionRate Float?
-//   packetsLost Int?
-//   transportType String?
-//   localCandidateType String?
-//   remoteCandidateType String?
-//   videoSentBitrate Float?
-//   videoSentFrameRate Float?
-//   videoSentResolution String?
-//   videoSentPacketsLost Int?
-//   videoSentFramesEncoded Int?
-//   videoSentRetransmittedPackets Int?
-//   videoSentCodec String?
-//   videoReceivedBitrate Float?
-//   videoReceivedFrameRate Float?
-//   videoReceivedResolution String?
-//   videoReceivedJitter Float?
-//   videoReceivedPacketsLost Int?
-//   audioSentBitrate Float?
-//   audioSentPacketsLost Int?
-//   audioSentCodec String?
-//   audioSentRetransmittedPackets Int?
-//   audioReceivedBitrate Float?
-//   audioReceivedJitter Float?
-//   audioReceivedPacketsLost Int?
-// }

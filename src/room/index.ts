@@ -86,9 +86,11 @@
 // }
 
 import { Socket } from "socket.io";
+import prisma from '../config/db.config';
 import {v4 as uuidV4} from 'uuid';
 
-const rooms: Record<string, string[]> = {}
+
+// const rooms: Record<string, string[]> = {}
 
 interface IRoomParams {
     roomId: string;
@@ -96,45 +98,82 @@ interface IRoomParams {
 }
 
 export const roomHandler = (socket: Socket) => {
-    const createroom = () => {
+    const createRoom = async () => {
         const roomId = uuidV4();
-        rooms[roomId] = [];
-        socket.emit('room-created', {
-            roomId
-        })
-        console.log('user created the room');
+        try {
+            await prisma.room.create({
+                data: {
+                    roomId,
+                    peers: [] // Inicialmente vacío
+                }
+            });
+            socket.emit('room-created', { roomId });
+            console.log('Room created and saved to DB:', roomId);
+        } catch (error) {
+            console.error('Error creating room:', error);
+            socket.emit('room-creation-error', { error: 'Failed to create room' });
+        }
     };
-    const joinroom = ({ roomId, peerId }: IRoomParams) => {
-        if (rooms[roomId]) {
-            console.log('user joined the room: ', roomId, peerId);
-            if (!(rooms[roomId].includes(peerId))) {
-                rooms[roomId].push(peerId)
+
+    const joinRoom = async ({ roomId, peerId }: IRoomParams) => {
+        try {
+            const room = await prisma.room.findUnique({
+                where: { roomId }
+            });
+
+            if (!room) {
+                socket.emit('room-not-found', { roomId });
+                return;
             }
+
+            // Evitar duplicados
+            if (!room.peers.includes(peerId)) {
+                await prisma.room.update({
+                    where: { roomId },
+                    data: {
+                        peers: { push: peerId }
+                    }
+                });
+            }
+
             socket.join(roomId);
             socket.emit('get-users', {
                 roomId,
-                participants: rooms[roomId]
-            })
+                participants: room.peers
+            });
+            socket.to(roomId).emit('user-joined', { peerId });
 
-            socket.to(roomId).emit("user-joined", { peerId, roomId });
+            console.log('User joined room:', peerId, roomId);
+        } catch (error) {
+            console.error('Error joining room:', error);
         }
-
-        socket.on('disconnect', () => {
-            console.log(`user left the room`, peerId);
-            leaveRoom({roomId, peerId})
-        })
-
     };
 
-    const leaveRoom = ({roomId, peerId}: IRoomParams) => {
-        if (rooms[roomId]) {
-            rooms[roomId] = rooms[roomId].filter(id => id !== peerId);
-            socket.to(roomId).emit('user-disconnected', peerId)
-        } else (
-            console.log('[room no existe]', roomId)
-        )
+    const leaveRoom = async ({ roomId, peerId }: IRoomParams) => {
+        try {
+            const room = await prisma.room.findUnique({
+                where: { roomId }
+            });
 
-    }
-    socket.on("create-room", createroom);
-    socket.on("join-room", joinroom);
-}
+            if (room) {
+                const updatedPeers = room.peers.filter((id: string) => id !== peerId);
+                await prisma.room.update({
+                    where: { roomId },
+                    data: { peers: updatedPeers }
+                });
+
+                socket.to(roomId).emit('user-disconnected', peerId);
+                console.log('User left room:', peerId);
+            }
+        } catch (error) {
+            console.error('Error leaving room:', error);
+        }
+    };
+
+    socket.on('create-room', createRoom);
+    socket.on('join-room', joinRoom);
+    socket.on('leave-room', leaveRoom);
+    socket.on('disconnect', () => {
+        // Opcional: Manejar desconexiones abruptas si tienes el peerId
+    });
+};
