@@ -2,7 +2,7 @@ import express from 'express';
 import http from 'http';
 import {Server} from 'socket.io';
 import cors from 'cors';
-import { roomHandler } from './room';
+// import { roomHandler } from './room';
 import Routes from "./routes"
 import { ExpressPeerServer } from 'peer';
 import {v4 as uuidV4} from 'uuid';

@@ -108,8 +108,8 @@ var roomHandler = function (socket) {
                         roomId: roomId,
                         participants: room.peers
                     });
-                    socket.to(roomId).emit('user-joined', { peerId: peerId });
-                    console.log('User joined room:', peerId, roomId);
+                    console.log("PARTICIPANTES QUE SE ENVIAN: ", { peerId: peerId, roomId: roomId });
+                    socket.to(roomId).emit('user-joined', { peerId: peerId, roomId: roomId });
                     return [3 /*break*/, 5];
                 case 4:
                     error_2 = _c.sent();
@@ -119,29 +119,44 @@ var roomHandler = function (socket) {
             }
         });
     }); };
-    // const leaveRoom = async ({ roomId, peerId }: IRoomParams) => {
-    //     try {
-    //         const room = await prisma.room.findUnique({
-    //             where: { roomId }
-    //         });
-    //         if (room) {
-    //             const updatedPeers = room.peers.filter((id: string) => id !== peerId);
-    //             await prisma.room.update({
-    //                 where: { roomId },
-    //                 data: { peers: updatedPeers }
-    //             });
-    //             socket.to(roomId).emit('user-disconnected', peerId);
-    //             console.log('User left room:', peerId);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error leaving room:', error);
-    //     }
-    // };
+    var leaveRoom = function (_a) { return __awaiter(void 0, [_a], void 0, function (_b) {
+        var room, updatedPeers, error_3;
+        var roomId = _b.roomId, peerId = _b.peerId;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _c.trys.push([0, 4, , 5]);
+                    return [4 /*yield*/, db_config_1.default.room.findUnique({
+                            where: { roomId: roomId }
+                        })];
+                case 1:
+                    room = _c.sent();
+                    if (!room) return [3 /*break*/, 3];
+                    updatedPeers = room.peers.filter(function (id) { return id !== peerId; });
+                    return [4 /*yield*/, db_config_1.default.room.update({
+                            where: { roomId: roomId },
+                            data: { peers: updatedPeers }
+                        })];
+                case 2:
+                    _c.sent();
+                    socket.to(roomId).emit('user-disconnected', peerId);
+                    console.log('User left room:', peerId);
+                    _c.label = 3;
+                case 3: return [3 /*break*/, 5];
+                case 4:
+                    error_3 = _c.sent();
+                    console.error('Error leaving room:', error_3);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
+        });
+    }); };
     socket.on('create-room', createRoom);
     socket.on('join-room', joinRoom);
-    // socket.on('leave-room', leaveRoom);
-    // socket.on('disconnect', () => {
-    //     // Opcional: Manejar desconexiones abruptas si tienes el peerId
-    // });
+    socket.on('leave-room', leaveRoom);
+    socket.on('disconnect', function (info) {
+        // Opcional: Manejar desconexiones abruptas si tienes el peerId
+        console.log('USUARIO DESCONECTADO: ', info);
+    });
 };
 exports.roomHandler = roomHandler;
