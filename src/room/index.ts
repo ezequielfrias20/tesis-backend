@@ -142,7 +142,7 @@ export const roomHandler = (socket: Socket) => {
                 roomId,
                 participants: room.peers
             });
-            socket.to(roomId).emit('user-joined', { peerId });
+            socket.to(roomId).emit('user-joined', { peerId, roomId });
 
             console.log('User joined room:', peerId, roomId);
         } catch (error) {
